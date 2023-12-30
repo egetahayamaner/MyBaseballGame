@@ -29,6 +29,7 @@ public class Ball : MonoBehaviour
     public TextMeshProUGUI redTeamScoreText;
     public TextMeshProUGUI blueTeamFinalScoreText;
     public TextMeshProUGUI redTeamFinalScoreText;
+    private bool scoredThisRound = false;
 
 
 
@@ -50,7 +51,7 @@ public class Ball : MonoBehaviour
     Vector3 torque = new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(0.9f, 1.1f), Random.Range(-0.1f, 0.1f));
 
     // Apply the random force and torque
-    rb.AddForce(randomDirection.normalized * Random.Range(800, 805));
+    rb.AddForce(randomDirection.normalized * Random.Range(800, 1300));
     rb.AddTorque(torque * Random.Range(500, 1000));
 
     if (strikerMovement != null)
@@ -81,6 +82,11 @@ public class Ball : MonoBehaviour
             other.transform.DORotate(new Vector3(0, -75, 0), 1).OnComplete(BallToTheBases);
             
         }
+        if (other.CompareTag("BallOut") && !scoredThisRound)
+    {
+        ScoreForRedTeam();
+        scoredThisRound = true;
+    }
     if (other.tag == "Final Point" && !roundTriggered)
     {
         OnBallReachedFinalBase();
@@ -88,6 +94,13 @@ public class Ball : MonoBehaviour
         IncrementRound();
     }
     }
+    void ScoreForRedTeam()
+{
+    redTeamScore++; // Increment the blue team score
+    UpdateScoreUI();
+    IncrementRound(); // Update the UI to reflect the new score
+    // Any other logic you want to execute when blue team scores
+}
 
     void BallToTheBases()
     {
@@ -165,6 +178,7 @@ void ResetRound()
     Debug.Log("Round " + currentRound + " starts");
     ballReachedFinal = false;
     strikerReachedFinal = false;
+    scoredThisRound = false;
 }
 
 void EndGame()
@@ -175,6 +189,8 @@ void EndGame()
     Debug.Log("Game over after " + maxRounds + " rounds.");
     // Implement any end game logic here
     gameOverPanel.SetActive(true);
+    Invoke(nameof(BallCatcher), 0);
+    StopBallCatcherMovement();
 }
 void ResetBall()
 {
@@ -273,6 +289,15 @@ public void StopBallAndResetPosition()
     {
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
+    }
+}
+void StopBallCatcherMovement()
+{
+    NavMeshAgent agent = ballCatcher.GetComponent<NavMeshAgent>();
+    if (agent != null)
+    {
+        agent.ResetPath(); // This will clear the current path of the NavMeshAgent
+        agent.enabled = false; // Optionally, disable the NavMeshAgent component
     }
 }
 }
